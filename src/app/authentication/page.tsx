@@ -1,0 +1,26 @@
+"use client";
+
+import { Tabs, TabsContent, TabsList, TabsTrigger } from "@/components/ui/tabs";
+import SignUpForm from "./components/sign-up-form";
+import LoginForm from "./components/login-form";
+
+const authenticationPage = () => {
+  return (
+    <div className="flex h-screen w-screen items-center justify-center">
+      <Tabs defaultValue="login" className="w-[400px]">
+        <TabsList>
+          <TabsTrigger value="login">Account</TabsTrigger>
+          <TabsTrigger value="register">Password</TabsTrigger>
+        </TabsList>
+        <TabsContent value="login">
+          <LoginForm />
+        </TabsContent>
+        <TabsContent value="register">
+          <SignUpForm />
+        </TabsContent>
+      </Tabs>
+    </div>
+  );
+};
+
+export default authenticationPage;
