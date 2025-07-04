@@ -7,8 +7,8 @@ const authenticationPage = () => {
     <div className="flex h-screen w-screen items-center justify-center">
       <Tabs defaultValue="login" className="w-[400px]">
         <TabsList>
-          <TabsTrigger value="login">Account</TabsTrigger>
-          <TabsTrigger value="register">Password</TabsTrigger>
+          <TabsTrigger value="login">Login</TabsTrigger>
+          <TabsTrigger value="register">Criar conta</TabsTrigger>
         </TabsList>
         <TabsContent value="login">
           <LoginForm />
