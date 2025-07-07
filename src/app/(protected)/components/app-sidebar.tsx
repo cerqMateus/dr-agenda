@@ -28,16 +28,15 @@ import {
   DropdownMenuItem,
   DropdownMenuTrigger,
 } from "@/components/ui/dropdown-menu";
-import { Button } from "@/components/ui/button";
 import { authClient } from "@/lib/auth-client";
-import { useRouter } from "next/navigation";
+import { usePathname, useRouter } from "next/navigation";
 import { Avatar, AvatarFallback } from "@/components/ui/avatar";
 
 // Menu items.
 const items = [
   {
     title: "Dashboard",
-    url: "#",
+    url: "/dashboard",
     icon: LayoutDashboard,
   },
   {
@@ -58,6 +57,7 @@ const items = [
 ];
 
 export function AppSidebar() {
+  const pathName = usePathname();
   const router = useRouter();
   const session = authClient.useSession();
 
@@ -82,7 +82,7 @@ export function AppSidebar() {
             <SidebarMenu>
               {items.map((item) => (
                 <SidebarMenuItem key={item.title}>
-                  <SidebarMenuButton asChild>
+                  <SidebarMenuButton asChild isActive={pathName === item.url}>
                     <Link href={item.url}>
                       <item.icon />
                       <span>{item.title}</span>
