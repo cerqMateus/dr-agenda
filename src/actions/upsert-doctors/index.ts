@@ -10,6 +10,7 @@ import dayjs from "dayjs";
 import utc from "dayjs/plugin/utc";
 
 import { upsertDoctorSchema } from "./schema";
+import { revalidatePath } from "next/cache";
 
 dayjs.extend(utc);
 
@@ -56,4 +57,5 @@ export const upsertDoctor = actionClient
                     availableToTime: availableToTimeUTC.format("HH:mm:ss"),
                 },
             });
+        revalidatePath("/doctors")
     });
