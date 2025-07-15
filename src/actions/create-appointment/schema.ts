@@ -1,7 +1,6 @@
 import { z } from "zod";
 
-export const upsertAppointmentSchema = z.object({
-    id: z.string().uuid().optional(),
+export const createAppointmentSchema = z.object({
     patientId: z.string().min(1, "Paciente é obrigatório."),
     doctorId: z.string().min(1, "Médico é obrigatório."),
     appointmentPriceInCents: z.number().int().positive({
@@ -10,4 +9,4 @@ export const upsertAppointmentSchema = z.object({
     date: z.date(),
 });
 
-export type UpsertAppointmentData = z.infer<typeof upsertAppointmentSchema>;
+export type CreateAppointmentData = z.infer<typeof createAppointmentSchema>;

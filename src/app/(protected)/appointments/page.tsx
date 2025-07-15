@@ -12,9 +12,11 @@ import { headers } from "next/headers";
 import { redirect } from "next/navigation";
 import { db } from "@/db";
 import { eq } from "drizzle-orm";
-import { patientsTable, doctorsTable } from "@/db/schema";
+import { patientsTable, doctorsTable, appointmentsTable } from "@/db/schema";
 
 import AddAppointmentButton from "./components/add-appointment-button";
+import { DataTable } from "@/components/data-table";
+import { appointmentsTableColumns } from "./components/table-columns";
 
 const AppointmentsPage = async () => {
   const session = await auth.api.getSession({
@@ -29,12 +31,20 @@ const AppointmentsPage = async () => {
     redirect("/clinic-form");
   }
 
-  const [patients, doctors] = await Promise.all([
+  const [patients, doctors, appointments] = await Promise.all([
     db.query.patientsTable.findMany({
       where: eq(patientsTable.clinicId, session.user.clinic.id),
     }),
     db.query.doctorsTable.findMany({
       where: eq(doctorsTable.clinicId, session.user.clinic.id),
+    }),
+    db.query.appointmentsTable.findMany({
+      where: eq(appointmentsTable.clinicId, session.user.clinic.id),
+      with: {
+        patient: true,
+        doctor: true,
+      },
+      orderBy: (appointments, { desc }) => [desc(appointments.date)],
     }),
   ]);
 
@@ -52,10 +62,7 @@ const AppointmentsPage = async () => {
         </PageActions>
       </PageHeader>
       <PageContent>
-        {/* Listagem de agendamentos será implementada posteriormente */}
-        <div className="text-muted-foreground py-12 text-center">
-          A listagem de agendamentos será implementada em breve.
-        </div>
+        <DataTable data={appointments} columns={appointmentsTableColumns} />
       </PageContent>
     </PageContainer>
   );

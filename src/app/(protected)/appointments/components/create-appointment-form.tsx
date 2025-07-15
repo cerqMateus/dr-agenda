@@ -9,7 +9,7 @@ import { z } from "zod";
 import { useState } from "react";
 import { ChevronDownIcon } from "lucide-react";
 
-import { upsertAppointment } from "@/actions/upsert-appointment";
+import { createAppointment } from "@/actions/create-appointment";
 import { Button } from "@/components/ui/button";
 import { Calendar } from "@/components/ui/calendar";
 import {
@@ -52,17 +52,17 @@ const formSchema = z.object({
   date: z.date().optional(),
 });
 
-interface UpsertAppointmentFormProps {
+interface CreateAppointmentFormProps {
   patients: (typeof patientsTable.$inferSelect)[];
   doctors: (typeof doctorsTable.$inferSelect)[];
   onSuccess?: () => void;
 }
 
-const UpsertAppointmentForm = ({
+const CreateAppointmentForm = ({
   patients,
   doctors,
   onSuccess,
-}: UpsertAppointmentFormProps) => {
+}: CreateAppointmentFormProps) => {
   const [isDatePickerOpen, setIsDatePickerOpen] = useState(false);
 
   const form = useForm<z.infer<typeof formSchema>>({
@@ -90,7 +90,7 @@ const UpsertAppointmentForm = ({
     }
   };
 
-  const upsertAppointmentAction = useAction(upsertAppointment, {
+  const createAppointmentAction = useAction(createAppointment, {
     onSuccess: () => {
       toast.success("Agendamento criado com sucesso.");
       form.reset();
@@ -107,7 +107,7 @@ const UpsertAppointmentForm = ({
       return;
     }
 
-    upsertAppointmentAction.execute({
+    createAppointmentAction.execute({
       patientId: data.patientId,
       doctorId: data.doctorId,
       appointmentPriceInCents: data.appointmentPriceInCents,
@@ -276,10 +276,10 @@ const UpsertAppointmentForm = ({
           <DialogFooter>
             <Button
               type="submit"
-              disabled={upsertAppointmentAction.isPending}
+              disabled={createAppointmentAction.isPending}
               className="w-full"
             >
-              {upsertAppointmentAction.isPending
+              {createAppointmentAction.isPending
                 ? "Criando..."
                 : "Criar Agendamento"}
             </Button>
@@ -290,4 +290,4 @@ const UpsertAppointmentForm = ({
   );
 };
 
-export default UpsertAppointmentForm;
+export default CreateAppointmentForm;
