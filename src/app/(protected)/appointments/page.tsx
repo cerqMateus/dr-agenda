@@ -1,34 +1,21 @@
-import {
-  PageActions,
-  PageContainer,
-  PageContent,
-  PageDescription,
-  PageHeader,
-  PageHeaderContent,
-  PageTitle,
-} from "@/components/ui/page-container";
-import { auth } from "@/lib/auth";
 import { headers } from "next/headers";
-import { redirect } from "next/navigation";
-import { db } from "@/db";
-import { eq } from "drizzle-orm";
-import { patientsTable, doctorsTable, appointmentsTable } from "@/db/schema";
 
-import AddAppointmentButton from "./components/add-appointment-button";
+import { db } from "@/db";
+import { doctorsTable, patientsTable, appointmentsTable } from "@/db/schema";
+import { auth } from "@/lib/auth";
+import { eq, desc } from "drizzle-orm";
+import { PageContainer } from "@/components/ui/page-container";
 import { DataTable } from "@/components/data-table";
 import { appointmentsTableColumns } from "./components/table-columns";
+import AddAppointmentButton from "./components/add-appointment-button";
 
-const AppointmentsPage = async () => {
+export default async function AppointmentsPage() {
   const session = await auth.api.getSession({
     headers: await headers(),
   });
 
-  if (!session?.user) {
-    redirect("/authentication");
-  }
-
-  if (!session?.user.clinic) {
-    redirect("/clinic-form");
+  if (!session?.user?.clinic?.id) {
+    throw new Error("Clinic not found");
   }
 
   const [patients, doctors, appointments] = await Promise.all([
@@ -44,28 +31,17 @@ const AppointmentsPage = async () => {
         patient: true,
         doctor: true,
       },
-      orderBy: (appointments, { desc }) => [desc(appointments.date)],
+      orderBy: desc(appointmentsTable.date),
     }),
   ]);
 
   return (
     <PageContainer>
-      <PageHeader>
-        <PageHeaderContent>
-          <PageTitle>Agendamentos</PageTitle>
-          <PageDescription>
-            Gerencie os agendamentos da sua clínica
-          </PageDescription>
-        </PageHeaderContent>
-        <PageActions>
-          <AddAppointmentButton patients={patients} doctors={doctors} />
-        </PageActions>
-      </PageHeader>
-      <PageContent>
-        <DataTable data={appointments} columns={appointmentsTableColumns} />
-      </PageContent>
+      <div className="mb-6 flex items-center justify-between">
+        <h1 className="text-3xl font-bold tracking-tight">Agendamentos</h1>
+        <AddAppointmentButton patients={patients} doctors={doctors} />
+      </div>
+      <DataTable data={appointments} columns={appointmentsTableColumns} />
     </PageContainer>
   );
-};
-
-export default AppointmentsPage;
+}

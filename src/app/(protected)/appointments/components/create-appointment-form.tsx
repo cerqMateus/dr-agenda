@@ -42,6 +42,9 @@ import {
 } from "@/components/ui/popover";
 import { patientsTable, doctorsTable } from "@/db/schema";
 import { ptBR } from "date-fns/locale";
+import { useQuery } from "@tanstack/react-query";
+import { getAvailableTimes } from "@/actions/get-available-times";
+import dayjs from "dayjs";
 
 const formSchema = z.object({
   patientId: z.string().min(1, "Paciente é obrigatório."),
@@ -50,6 +53,7 @@ const formSchema = z.object({
     .number()
     .positive("Valor deve ser maior que zero."),
   date: z.date().optional(),
+  time: z.string().min(1, "Horário é obrigatório."),
 });
 
 interface CreateAppointmentFormProps {
@@ -73,6 +77,7 @@ const CreateAppointmentForm = ({
       doctorId: "",
       appointmentPriceInCents: 0,
       date: undefined,
+      time: "",
     },
   });
 
@@ -81,7 +86,17 @@ const CreateAppointmentForm = ({
   const selectedDoctor = doctors.find(
     (doctor) => doctor.id === selectedDoctorId,
   );
+  const selectedDate = form.watch("date");
 
+  const { data: availableTimes, isLoading: isLoadingTimes } = useQuery({
+    queryKey: ["available-times", selectedDoctorId, selectedDate],
+    queryFn: () =>
+      getAvailableTimes({
+        date: selectedDate!,
+        doctorId: selectedDoctorId,
+      }),
+    enabled: !!selectedDoctorId && !!selectedDate,
+  });
   // Atualiza o valor da consulta quando o médico é selecionado
   const handleDoctorChange = (doctorId: string) => {
     const doctor = doctors.find((d) => d.id === doctorId);
@@ -107,11 +122,21 @@ const CreateAppointmentForm = ({
       return;
     }
 
+    if (!data.time) {
+      toast.error("Horário é obrigatório.");
+      return;
+    }
+
+    // Combinar data e horário em um único Date
+    const [hours, minutes] = data.time.split(":").map(Number);
+    const appointmentDateTime = new Date(data.date);
+    appointmentDateTime.setHours(hours, minutes, 0, 0);
+
     createAppointmentAction.execute({
       patientId: data.patientId,
       doctorId: data.doctorId,
       appointmentPriceInCents: data.appointmentPriceInCents,
-      date: data.date,
+      date: appointmentDateTime,
     });
   };
 
@@ -258,25 +283,48 @@ const CreateAppointmentForm = ({
             )}
           />
 
-          <div className="space-y-2">
-            <FormLabel>Horário</FormLabel>
-            <Select disabled={!isPatientAndDoctorSelected}>
-              <SelectTrigger className="w-full">
-                <SelectValue placeholder="Selecione um horário" />
-              </SelectTrigger>
-              <SelectContent></SelectContent>
-            </Select>
-            <p className="text-muted-foreground text-sm">
-              {!isPatientAndDoctorSelected
-                ? "Selecione um paciente e médico para habilitar os horários"
-                : "Horários serão implementados em breve"}
-            </p>
-          </div>
+          <FormField
+            control={form.control}
+            name="time"
+            render={({ field }) => (
+              <FormItem>
+                <FormLabel>Horário</FormLabel>
+                <Select
+                  onValueChange={field.onChange}
+                  value={field.value}
+                  disabled={!isPatientAndDoctorSelected || !selectedDate}
+                >
+                  <FormControl>
+                    <SelectTrigger>
+                      <SelectValue placeholder="Selecione um horário" />
+                    </SelectTrigger>
+                  </FormControl>
+                  <SelectContent>
+                    {availableTimes?.data?.map((timeSlot: any) => (
+                      <SelectItem key={timeSlot.time} value={timeSlot.time}>
+                        {timeSlot.time.slice(0, 5)} {/* Remove os segundos */}
+                      </SelectItem>
+                    ))}
+                  </SelectContent>
+                </Select>
+                <p className="text-muted-foreground text-sm">
+                  {!isPatientAndDoctorSelected
+                    ? "Selecione um paciente e médico para habilitar os horários"
+                    : !selectedDate
+                      ? "Selecione uma data para ver os horários disponíveis"
+                      : availableTimes?.data?.length === 0
+                        ? "Nenhum horário disponível para esta data"
+                        : "Selecione um horário disponível"}
+                </p>
+                <FormMessage />
+              </FormItem>
+            )}
+          />
 
           <DialogFooter>
             <Button
               type="submit"
-              disabled={createAppointmentAction.isPending}
+              disabled={createAppointmentAction.isPending || !selectedDate}
               className="w-full"
             >
               {createAppointmentAction.isPending
